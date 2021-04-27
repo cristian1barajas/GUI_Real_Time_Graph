@@ -4,6 +4,7 @@ import collections
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.animation as animation
+from matplotlib.lines import Line2D
 import serial.tools.list_ports
 from tkinter import *
 import tkinter as tk
@@ -33,10 +34,11 @@ def askQuit():
     app.quit()
     app.destroy()
 
-def plotData(self, Samples, lines):
+def plotData(self, Samples, numData, lines):
     global value
-    data.append(value)
-    lines.set_data(range(Samples), data)
+    for i in range(numData):
+        data[i].append(value)
+        lines[i].set_data(range(Samples), data[i])
 
 def onButtonPlug():
     global serialPort
@@ -45,19 +47,19 @@ def onButtonPlug():
     serialPort = _serialPort[0:4]
     thread.start()
     plugButton.config(image=plugBtnOn)
-    waveButton.config(image=waveBtn, state='normal')
+    #waveButton.config(image=waveBtn, state='normal')
     appButton.config(image=appBtn)
     appBar.update_idletasks()
 
-def onButtonWave():
-    waveButton.config(image=waveBtnOn)
-    plugButton.config(image=plugBtn)
-    appButton.config(image=appBtn)
-    appBar.update_idletasks()
+# def onButtonWave():
+#     waveButton.config(image=waveBtnOn)
+#     plugButton.config(image=plugBtn)
+#     appButton.config(image=appBtn)
+#     appBar.update_idletasks()
 
 def onButtonApp():
     appButton.config(image=appBtnOn)
-    waveButton.config(image=waveBtn)
+    #waveButton.config(image=waveBtn)
     plugButton.config(image=plugBtn)
     appBar.update_idletasks()
     findCOM = serial.tools.list_ports
@@ -87,12 +89,23 @@ serialConnection = serial.Serial()
 
 # Variables Graph
 samples = 100
-data = collections.deque([0] * samples, maxlen=samples)
 sampleTime = 100
 xmin = 0
 xmax = samples
-ymin = 0
-ymax = 4200
+ymin = [-300, -300, -300, -300]
+ymax = [300, 300, 300, 300]
+numData = 4
+lines = []
+data = []
+
+for i in range(numData):
+    data.append(collections.deque([0] * samples, maxlen = samples))
+
+lines.append(Line2D([], [], linewidth=1, linestyle=":", color="m"))
+lines.append(Line2D([], [], linewidth=1, linestyle=":", color="c"))
+lines.append(Line2D([], [], linewidth=1, linestyle=":", color="y"))
+lines.append(Line2D([], [], linewidth=1, linestyle=":", color="w"))
+
 COLOR = '#7B7B7B'
 plt.rcParams['text.color'] = COLOR
 plt.rcParams['axes.labelcolor'] = COLOR
@@ -101,27 +114,49 @@ plt.rcParams['ytick.color'] = COLOR
 plt.rcParams['axes.grid'] = True
 plt.rcParams['grid.alpha'] = 1
 plt.rcParams['grid.color'] = "#292929"
+
 fig = plt.figure(facecolor='#2D3342')
-ax = plt.axes(xlim=(xmin, xmax), ylim=(ymin, ymax))
-plt.title("Real-time Graph")
-ax.set_xlabel('Time')
-ax.set_ylabel('f(Time)')
-ax.set_facecolor('#000000')
-lines = ax.plot([], [], linewidth=1, linestyle=":", color="m")[0]
+ax1 = fig.add_subplot(2, 2, 1, xlim = (xmin, xmax), ylim=(ymin[0], ymax[0]))
+ax1.xaxis.set_tick_params(labelsize=9)
+ax1.yaxis.set_tick_params(labelsize=9)
+ax1.set_ylabel('Value')
+ax1.set_facecolor('#000000')
+ax1.add_line(lines[0])
+
+ax2 = fig.add_subplot(2, 2, 2, xlim = (xmin, xmax), ylim = (ymin[1], ymax[1]))
+ax2.xaxis.set_tick_params(labelsize=9)
+ax2.yaxis.set_tick_params(labelsize=9)
+ax2.set_facecolor('#000000')
+ax2.add_line(lines[1])
+
+ax3 = fig.add_subplot(2, 2, 3, xlim = (xmin, xmax), ylim = (ymin[2], ymax[2]))
+ax3.xaxis.set_tick_params(labelsize=9)
+ax3.yaxis.set_tick_params(labelsize=9)
+ax3.set_xlabel("Samples")
+ax3.set_ylabel("Value")
+ax3.set_facecolor('#000000')
+ax3.add_line(lines[2])
+
+ax4 = fig.add_subplot(2, 2, 4, xlim = (xmin, xmax), ylim = (ymin[3], ymax[3]))
+ax4.xaxis.set_tick_params(labelsize=9)
+ax4.yaxis.set_tick_params(labelsize=9)
+ax4.set_xlabel("Samples")
+ax4.set_facecolor('#000000')
+ax4.add_line(lines[3])
 
 # Raíz
 app = Tk()
 app.protocol('WM_DELETE_WINDOW', askQuit)
 app.title('Osciloscopio')
-#app.resizable(0, 0)
+app.resizable(0, 0)
 app.iconbitmap('img/logo.ico')
-app.geometry("700x548")
+app.geometry("700x500")
 app.config(bg="#2D2D39")
 
 # Main Frame
 appIndex = Frame(app)
 appIndex.pack(side="right")
-appIndex.config(bg="#20202C", width="700", height="580")
+appIndex.config(bg="#20202C", width="700", height="500")
 
 # App Bar Frame
 appBar = Frame(app)
@@ -150,11 +185,11 @@ appButton.config(activebackground="#2D2D39")
 # Button Wave
 # _waveBtn = Image.open('img/waveButton.png')
 # waveBtn = ImageTk.PhotoImage(_waveBtn, master=appBar)
-waveBtn = PhotoImage(file='img/waveButton.png', master=appBar)
-waveBtnOn = PhotoImage(file='img/waveButtonOn.png', master=appBar)
-waveButton = Button(appBar, image=waveBtn, bd=0, bg="#2D2D39", command=onButtonWave)
-waveButton.pack(padx=13, pady=20)
-waveButton.config(activebackground="#2D2D39", state="disabled")
+# waveBtn = PhotoImage(file='img/waveButton.png', master=appBar)
+# waveBtnOn = PhotoImage(file='img/waveButtonOn.png', master=appBar)
+# waveButton = Button(appBar, image=waveBtn, bd=0, bg="#2D2D39", command=onButtonWave)
+# waveButton.pack(padx=13, pady=20)
+# waveButton.config(activebackground="#2D2D39", state="disabled")
 
 # Button Plug
 #_plugBtn = Image.open('img/plugButton.png')
@@ -184,12 +219,12 @@ dropBAUD["menu"].config(bg="#96B8A0")
 dropBAUD.grid(row=0, column=1)
 
 # Button Test
-testButton = Button(graphicsControls, text="Test")
-testButton.pack(padx=100, pady=10, side="bottom")
+# testButton = Button(graphicsControls, text="Test")
+# testButton.pack(padx=100, pady=10, side="bottom")
 
 canvas = FigureCanvasTkAgg(fig, master=graphicsControls)
 canvas._tkcanvas.pack()
 
-anim = animation.FuncAnimation(fig, plotData, fargs=(samples, lines), interval=sampleTime)
+anim = animation.FuncAnimation(fig, plotData, fargs=(samples, numData, lines), interval=sampleTime)
 
 mainloop()
